@@ -1,19 +1,21 @@
 #!/bin/sh
 
+export PHPVERSION=8.2
+
 sudo timedatectl set-timezone Asia/Jakarta
 echo "----------------------------------------------------"
-echo " START INSTALL CACTI TERBARU DEBIAN 12 "
+echo " START INSTALLING THE LATEST CACTI DEBIAN 12 "
 echo "----------------------------------------------------"
 sleep 2
 echo ""
 echo "----------------------------------------------------"
-echo " update dan upgrade "
+echo " update and upgrade "
 echo "----------------------------------------------------"
 apt update && apt upgrade -y
 
 sleep 2
 echo "----------------------------------------------------"
-echo "Install Paket pendukung Cacti"
+echo "Install Cacti support package"
 echo "----------------------------------------------------"
 apt install cron snmp php-snmp rrdtool librrds-perl unzip curl git gnupg2 -y
 
@@ -21,7 +23,8 @@ sleep 2
 echo "----------------------------------------------------"
 echo "Install LAMP Server"
 echo "----------------------------------------------------"
-apt install apache2 mariadb-server php php-mysql libapache2-mod-php php-xml php-ldap php-mbstring php-gd php-gmp php-intl -y
+apt install apache2 mariadb-server  php8.2 libapache2-mod-php -y
+apt install -y php${PHPVERSION}-{mysql,xml,ldap,mbstring,gd,gmp,intl}
 
 sleep 2
 echo "----------------------------------------------------"
@@ -69,11 +72,11 @@ EOF
 systemctl restart mariadb
 
 echo "----------------------------------------------------"
-echo "  Nama Database  "
+echo "  Database Name  "
 echo "----------------------------------------------------"
 sleep 2
 
-read -p "contoh cactidb: " namadb
+read -p "cactidb ​​example: " namadb
 
 mysqladmin -uroot create $namadb
 
@@ -82,7 +85,7 @@ echo "  Password Database  "
 echo "----------------------------------------------------"
 sleep 2
 
-read -p "masukkan password untuk database: " passdb
+read -p "enter password for database: " passdb
 
 mysql -uroot -e "grant all on $namadb.* to 'cactiuser'@'localhost' identified by '$passdb'"
 
@@ -97,21 +100,23 @@ mysql -uroot -e "flush privileges"
 rm -rf /var/www/html/index.html
 
 echo "----------------------------------------------------"
-echo " download cacti versi terbaru "
+echo " download cacti latest version "
 echo "----------------------------------------------------"
 sleep 2
 
-wget https://www.cacti.net/downloads/cacti-latest.tar.gz --no-check-certificate
+if [ ! -f 'cacti-latest.tar.gz' ]; then
+    wget https://www.cacti.net/downloads/cacti-latest.tar.gz --no-check-certificate
+fi 
 
 echo "----------------------------------------------------"
-echo " Ekstrak Cacti "
+echo " Cacti Extract "
 echo "----------------------------------------------------"
 sleep 2
 
 tar -zxvf cacti-latest.tar.gz
 
 echo "----------------------------------------------------"
-echo " Copy Cacti ke Folder /var/www/html"
+echo " Copy Cacti to Folder /var/www/html"
 echo "----------------------------------------------------"
 sleep 2
 
@@ -132,7 +137,7 @@ sed -i 's/database_password = '\''cactiuser/database_password = '\'''$passdb'/g'
 sed -i 's/url_path = '\''\/cacti/url_path = '\''/g' /var/www/html/include/config.php
 
 echo "----------------------------------------------------"
-echo " Tambah cacti di cronjob"
+echo " Add cacti in cronjob"
 echo "----------------------------------------------------"
 sleep 2
 touch /etc/cron.d/cacti
@@ -143,7 +148,7 @@ EOF
 chmod +x /etc/cron.d/cacti
 echo "===================================================="
 echo " *** FINISH *** "
-echo " cacti terinstall di folder /var/www/html "
-echo " silahkan lanjutkan login cacti http://"`hostname -I | awk '{print $1}'`
+echo " cacti installed in folder /var/www/html "
+echo " please continue cacti login http://"`hostname -I | awk '{print $1}'`
 echo " username: admin password: admin "
 echo "===================================================="
